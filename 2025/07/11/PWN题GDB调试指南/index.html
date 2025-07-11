@@ -7,12 +7,12 @@
 <meta name="full-screen" content="yes">
 <meta name="theme-color" content="#317EFB" />
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
-<meta name="description" content="PWN题GDB调试指南开始学习pwn的时候，总会因为自己找不到文章而烦恼，所以开始更新这个《从0到有pwn学习系列》 作者废话：对于pwn题来说，调试是一个入门的关卡，会调试的pwn学者才算真正的入门pwn，但调试并不是一种技巧或一种理论并不是一蹴而就或者幡然醒悟，他是我们在学习pwn过程中将我们所学到的理论进行实践并积累经验的过程，你会在调试的过程中发现你学到的哪些知识（例如：栈溢出、shell">
+<meta name="description" content="PWN题GDB调试指南开始学习pwn的时候，总会因为自己找不到讲的详细的文章而烦恼，后来看了学长写了一篇文章，我受益良多。一篇好的文章能够给我们带来许多的收获，或许从那开始就对pwn顿悟了呢，也说不定。作者虽然笔力不太好，但是从学长那继承了这个系列，尽自己最大的努力去完善这个系列，所以开始更新这个《从0到有pwn学习系列》&lt;_&gt; 作者废话：对于pwn题来说，调试是一个入门的关卡，会调">
 <meta property="og:type" content="article">
 <meta property="og:title" content="PWN题GDB调试指南">
 <meta property="og:url" content="http://example.com/2025/07/11/PWN%E9%A2%98GDB%E8%B0%83%E8%AF%95%E6%8C%87%E5%8D%97/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="PWN题GDB调试指南开始学习pwn的时候，总会因为自己找不到文章而烦恼，所以开始更新这个《从0到有pwn学习系列》 作者废话：对于pwn题来说，调试是一个入门的关卡，会调试的pwn学者才算真正的入门pwn，但调试并不是一种技巧或一种理论并不是一蹴而就或者幡然醒悟，他是我们在学习pwn过程中将我们所学到的理论进行实践并积累经验的过程，你会在调试的过程中发现你学到的哪些知识（例如：栈溢出、shell">
+<meta property="og:description" content="PWN题GDB调试指南开始学习pwn的时候，总会因为自己找不到讲的详细的文章而烦恼，后来看了学长写了一篇文章，我受益良多。一篇好的文章能够给我们带来许多的收获，或许从那开始就对pwn顿悟了呢，也说不定。作者虽然笔力不太好，但是从学长那继承了这个系列，尽自己最大的努力去完善这个系列，所以开始更新这个《从0到有pwn学习系列》&lt;_&gt; 作者废话：对于pwn题来说，调试是一个入门的关卡，会调">
 <meta property="og:locale">
 <meta property="og:image" content="http://example.com/img/404.jpg">
 <meta property="og:image" content="http://example.com/img/404.jpg">
@@ -88,7 +88,7 @@
 <meta property="og:image" content="http://example.com/img/404.jpg">
 <meta property="og:image" content="http://example.com/img/404.jpg">
 <meta property="article:published_time" content="2025-07-11T07:49:53.000Z">
-<meta property="article:modified_time" content="2025-07-11T07:52:21.153Z">
+<meta property="article:modified_time" content="2025-07-11T08:12:15.872Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/404.jpg">
@@ -137,7 +137,7 @@
 
 <!-- Variable -->
 <script>window.ASYNC_CONFIG = {"hostname":"example.com","author":"John Doe","root":"/","typed_text":["沉浸在二进制海洋里的二进制狗"],"theme_version":"2.2.6","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"log.png","icon16":"favicon-16x16.png","icon32":"favicon-32x32.png","apple_touch_icon":"apple-touch-icon.png","webmanifest":"/site.webmanifest","visibilitychange":true,"hidden":"failure.ico","show_text":"欢迎莅临各位✌指导","hide_text":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://npm.elemecdn.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy","user_tag":"fas fa-user-alt"},"icontype":"font","highlight":{"plugin":"highlighjs","theme":true,"copy":true,"lang":false,"title":"default","height_limit":200},"toc":{"post_title":false},"live_time":{"start_time":"","prefix":"博客已萌萌哒运行 undefined 天"},"danmu":{"enable":false,"el":".trm-banner"},"covers":["/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%B8%AD%E4%B8%96%E7%BA%AA-%E5%AD%A4%E7%8B%AC%E7%9A%84%E5%A5%B3%E5%AD%A9.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E5%A2%A8%E4%BE%A0%E5%AE%A2%E8%A1%8C-%E6%8F%92%E7%94%BB.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E5%8D%A1%E6%AF%94-%E6%95%B0%E5%AD%97%E8%89%BA%E6%9C%AF-%E6%B0%B4.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%B8%A4%E7%A7%8D%E8%89%B2%E8%B0%83%E7%9A%84%E5%A4%B4%E5%8F%91-%E5%8A%A8%E6%BC%AB%E5%A5%B3%E5%AD%A9.pmg","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91Chris%E6%8F%92%E7%94%BB-%E6%8F%92%E7%94%BB.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91WLOP-%E7%89%B9%E5%86%99.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E5%B8%BD%E5%AD%90-%E6%89%8B%E5%A5%97-%E7%94%B5%E5%BD%B1%E4%BA%BA%E7%89%A9.png"],"creative_commons":{"license":"by-nc-sa","language":"deed.zh-hans"}};</script>
-<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2025-07-11 15:52:21"};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2025-07-11 16:12:15"};</script>
 
 <!-- Theme mode css -->
 <link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.2.6" id="trm-switch-style">
@@ -450,7 +450,7 @@
     <div class="col-sm-4">
         <div class="trm-card trm-label trm-label-light text-center">
             <i class="iconfont far fa-clock trm-icon"></i><br>
-            15:52
+            16:12
         </div>
     </div>
     <div class="col-sm-4">
@@ -462,7 +462,8 @@
 </div>
 <div class="trm-card ">
     <article id="article-container" class="trm-publication">
-    <h1 id="PWN题GDB调试指南"><a href="#PWN题GDB调试指南" class="headerlink" title="PWN题GDB调试指南"></a>PWN题GDB调试指南</h1><p>开始学习pwn的时候，总会因为自己找不到文章而烦恼，所以开始更新这个《从0到有pwn学习系列》</p>
+    <hr>
+<h1 id="PWN题GDB调试指南"><a href="#PWN题GDB调试指南" class="headerlink" title="PWN题GDB调试指南"></a>PWN题GDB调试指南</h1><p>开始学习pwn的时候，总会因为自己找不到讲的详细的文章而烦恼，后来看了学长写了一篇文章，我受益良多。一篇好的文章能够给我们带来许多的收获，或许从那开始就对pwn顿悟了呢，也说不定。作者虽然笔力不太好，但是从学长那继承了这个系列，尽自己最大的努力去完善这个系列，所以开始更新这个《从0到有pwn学习系列》&lt;<del>_</del>&gt;</p>
 <h3 id="作者废话："><a href="#作者废话：" class="headerlink" title="作者废话："></a>作者废话：</h3><p>对于pwn题来说，调试是一个入门的关卡，会调试的pwn学者才算真正的入门pwn，但调试并不是一种技巧或一种理论并不是一蹴而就或者幡然醒悟，他是我们在学习pwn过程中将我们所学到的理论进行实践并积累经验的过程，你会在调试的过程中发现你学到的哪些知识（例如：栈溢出、shellcode、栈迁移等等）是如何实现的，并感叹前辈们设计出如此精妙的手法进行攻击，在漫漫的学习历程中你会一边觉得调试很无聊总是对着一堆代码进行调试；但同时你又会感觉很有趣，你利用自己一点点构造的程序输入，一点点将程序腐蚀达到了自己想要的效果，像攻城一样，看似坚不可摧的程序其实也不堪一击，pwn的枯燥在于此，pwn的乐趣也在于此，初学者莫要丧气，多尝试多思考。</p>
 <p>文中将包含常用gdb调试指令，以及基础题型调试的关注重点和注意事项</p>
 <p>该文章如果需要会持续更新</p>
@@ -727,41 +728,6 @@
         </h5>
     </div>
     
-    
-        <div class="col-lg-6">
-    <div class="trm-blog-card trm-scroll-animation">
-        <a href="/2025/07/10/hello-world/" class="trm-cover-frame trm-anima-link">
-            
-            
-                <div class="trm-cover-img" data-random-img></div>
-            
-        </a>
-        
-        <div class="trm-card-descr">
-            <div class="trm-label trm-category trm-mb-20">
-                <a href=" /categories/ceshitest1/">
-                    ceshitest1
-                </a>
-            </div>
-            <h5>
-                <a href="/2025/07/10/hello-world/" class="trm-anima-link">
-                    Hello World
-                </a>
-            </h5>
-            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
-            <ul class="trm-card-data trm-label">
-                <li>25/07/10</li>
-                <li>17:55</li>
-                
-                    <li>75</li>
-                
-                
-                    <li>1</li>
-                
-            </ul>
-        </div>
-    </div>
-</div>
     
 </div>
 
